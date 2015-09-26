@@ -1,0 +1,15 @@
+{
+  "name": "pivotalbot",
+  "version": "1.0.0",
+  "description": "Telegramm bot for pivotal tracker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.12.1",
+    "pivotaltracker": "^0.1.3"
+  }
+}
