@@ -32,7 +32,9 @@ let postStory = function (params) {
 module.exports = {
     message: 'Завести новый баг',
     action: function*(msg) {
-        msg = yield 'Введи краткое описание';
+        if (! msg) {
+            msg = yield 'Введи краткое описание';
+        }
 
         yield postStory({name: msg});
     }
