@@ -1,6 +1,4 @@
 "use strict";
-let projectId = require('../config.json').project_id;
-
 let fs = require('fs');
 let path = require('path');
 let pivotal = require('../utils/pivotal');
