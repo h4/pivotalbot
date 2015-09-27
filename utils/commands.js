@@ -14,6 +14,7 @@ module.exports = {
         let commands = new Map();
 
         getCommandsList()
+            .filter((fname) => fname !== 'index')
             .forEach((fname) => {
                 let module = require(commandsPath + fname);
 

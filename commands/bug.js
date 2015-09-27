@@ -11,7 +11,7 @@ let requestHandler = function(callback) {
             return callback(`Не удалось создать задачу\n${err.error}`);
         }
 
-        return callback(`Задача создана.\nURL задачи: ${res.url}`);
+        return callback(`Задача создана.\n${res.url}`);
     }
 };
 
