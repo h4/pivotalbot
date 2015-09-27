@@ -1,9 +1,11 @@
 "use strict";
-let pivotal = require('pivotaltracker');
-let token = require('../config.json').pivotal_token;
 let projectId = require('../config.json').project_id;
 
-let client = new pivotal.Client(token);
+let fs = require('fs');
+let path = require('path');
+let pivotal = require('../utils/pivotal');
+let client = pivotal.client;
+
 
 let requestHandler = function(callback) {
     return function(err, res) {
@@ -19,7 +21,7 @@ let postStory = function (params) {
     return function (callback) {
         let handler = requestHandler(callback);
 
-        client.project(projectId)
+        client.project(params.project.id)
             .stories
             .create({
                 name: params.name,
@@ -29,6 +31,7 @@ let postStory = function (params) {
     };
 };
 
+
 module.exports = {
     message: 'Завести новый баг',
     action: function*(msg) {
@@ -36,6 +39,37 @@ module.exports = {
             msg = yield 'Введи краткое описание';
         }
 
-        yield postStory({name: msg});
+        /**
+         * @type Array
+         */
+        let projects = require('../projects.json');
+        let projectNames = projects.map((proj) => ( [ proj.name ] ));
+
+        let projectName = yield {
+            text: 'Выбери проект',
+            params: {
+                reply_markup: JSON.stringify({
+                    keyboard: projectNames,
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                    selective: true
+                })
+            }
+        };
+
+        let project = projects.find((proj) => proj.name === projectName);
+
+        if (! project) {
+            return {
+                text: `Не удалось создать задачу.\nПроект "${projectName}" не найден`,
+                params: {
+                    reply_markup: JSON.stringify({
+                        hide_keyboard: true
+                    })
+                }
+            }
+        }
+
+        yield postStory({name: msg, project: project});
     }
 };

@@ -14,11 +14,14 @@ function isGroupChat(msg) {
     return msg.chat.id !== msg.from.id;
 }
 
-function reply(message, chatId, force) {
+function reply(message, chatId, msg) {
     if (message === undefined) {
-        force && bot.sendMessage(chatId, 'Команда не известна, проверь в /help');
+        ! isGroupChat(msg) && bot.sendMessage(chatId, 'Команда не известна, проверь в /help');
     } else if (typeof message === 'string') {
         bot.sendMessage(chatId, message);
+    } else if (message.params !== undefined) {
+        message.params.reply_to_message_id = msg.message_id;
+        bot.sendMessage(chatId, message.text, message.params);
     } else {
         message(function(res) {
             bot.sendMessage(chatId, res, {disable_web_page_preview: true});
@@ -32,5 +35,5 @@ bot.on('text', function(msg) {
     let sessionId = fromId + '__' + chatId;
     let result = commands.exec(msg, sessionId);
 
-    reply(result, chatId, ! isGroupChat(msg));
+    reply(result, chatId, msg);
 });

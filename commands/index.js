@@ -30,13 +30,13 @@ module.exports = {
             let command = this.get(text);
             let message = getMessage(msg.text);
 
-            action = command.action(message);
+            action = command.action(message, msg.message_id);
             result = action.next();
 
             sessions.set(sessionId, action);
         } else if (sessions.has(sessionId)) {
             action = sessions.get(sessionId);
-            result = action.next(text);
+            result = action.next(text, msg.message_id);
         }
 
         return result && result.value;
