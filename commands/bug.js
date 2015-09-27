@@ -5,32 +5,35 @@ let projectId = require('../config.json').project_id;
 
 let client = new pivotal.Client(token);
 
-function requestHandler(callback) {
-    return function(err, story) {
+let requestHandler = function(callback) {
+    return function(err, res) {
         if (err) {
-            callback('Не удалось создать запрос:\n' + err.error);
-        } else {
-            callback('Баг-репорт получен, его адрес: ' + story.url);
+            return callback(`Не удалось создать задачу\n${err.error}`);
         }
+
+        return callback(`Задача создана.\nURL задачи: ${res.url}`);
     }
-}
+};
 
-module.exports = {
-    message: 'Завести новый баг',
-    action: function(msg, callback) {
+let postStory = function (params) {
+    return function (callback) {
         let handler = requestHandler(callback);
-
-        if (msg.length === 0) {
-            callback('Нужно хоть как-то описать баг');
-            return;
-        }
 
         client.project(projectId)
             .stories
             .create({
-                name: msg,
+                name: params.name,
                 storyType: 'bug',
                 labels: ['bug']
             }, handler);
+    };
+};
+
+module.exports = {
+    message: 'Завести новый баг',
+    action: function*(msg) {
+        msg = yield 'Введи краткое описание';
+
+        yield postStory({name: msg});
     }
 };

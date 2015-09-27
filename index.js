@@ -9,8 +9,12 @@ let botConfig = {
 
 let bot = new TelegramBot(config.bot_token, botConfig);
 
-function isCommand(text) {
-    return text.startsWith('/');
+function isCommand(msg) {
+    return msg.text && msg.text.startsWith('/');
+}
+
+function isGroupChat(msg) {
+    return msg.chat.id !== msg.from.id;
 }
 
 function getCommand(text) {
@@ -20,10 +24,28 @@ function getCommand(text) {
     try {
         command = require(`./commands/${ commandName }`);
     } catch (e) {
+        console.log(e);
         command = require('./commands/help');
     }
 
     return command;
+}
+
+function sendCommand(msg) {
+    let chatId = msg.chat.id;
+    let fromId = msg.from.id;
+    let sessionId = fromId + '__' + chatId;
+
+    let command = getCommand(msg.text);
+    let message = getMessage(msg.text);
+
+    let action = command.action(message);
+
+    let result = action.next();
+
+    sessions.set(sessionId, action);
+
+    return result.value;
 }
 
 function getMessage(text) {
@@ -36,18 +58,35 @@ function getMessage(text) {
     }
 }
 
+function reply(message, chatId, force) {
+    if (message === undefined && force) {
+        bot.sendMessage(chatId, 'Ниччё не понимаю, попробуй /help');
+    } else if (typeof message === 'string') {
+        bot.sendMessage(chatId, message);
+    } else {
+        message(function(res) {
+            bot.sendMessage(chatId, res, {disable_web_page_preview: true});
+        })
+    }
+}
+
+let sessions = new Map();
+
 bot.on('text', function(msg) {
     let chatId = msg.chat.id;
-    let text = msg.text;
+    let fromId = msg.from.id;
+    let sessionId = fromId + '__' + chatId;
+    let result;
 
-    if (isCommand(text)) {
-        let command = getCommand(text);
-        let message = getMessage(text);
-
-        command.action(message, (result) => bot.sendMessage(chatId, result));
+    if (isCommand(msg)) {
+        result = sendCommand(msg);
     } else {
-        let result = 'Ниччё не понимаю, попробуй /help';
+        if (sessions.has(sessionId)) {
+            let action = sessions.get(sessionId).next(msg.text);
 
-        bot.sendMessage(chatId, result);
+            result = action.value;
+        }
     }
+
+    reply(result, chatId, ! isGroupChat(msg));
 });
